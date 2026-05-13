@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BCT Phase Stability — ML Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0f14;--bg2:#111720;--bg3:#1a2230;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);--grid:rgba(255,255,255,0.04);--text:#e8edf5;--text2:#8a9bb5;--text3:#4a5870;--green:#00d4a0;--gd:rgba(0,212,160,0.12);--red:#ff5c5c;--rd:rgba(255,92,92,0.12);--blue:#4d9fff;--bd:rgba(77,159,255,0.1);--amber:#ffb347;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;}
+body.light-mode{--bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);--grid:rgba(0,0,0,0.05);--text:#0f172a;--text2:#475569;--text3:#64748b;--green:#059669;--gd:rgba(5,150,105,0.12);--red:#dc2626;--rd:rgba(220,38,38,0.12);--blue:#2563eb;--bd:rgba(37,99,235,0.1);--amber:#d97706;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;}
+nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;}
+.nbrand{display:flex;align-items:center;gap:10px;}
+.ndot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+.ntitle{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:0.05em;}
+.nsub{font-size:11px;color:var(--text3);margin-left:8px;}
+.ntabs{display:flex;}
+.ntab{padding:0 1.25rem;height:56px;display:flex;align-items:center;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.ntab:hover{color:var(--text);}
+.ntab.act{color:var(--green);border-bottom-color:var(--green);}
+.page{display:none;padding:2rem;max-width:1300px;margin:0 auto;}
+.page.act{display:block;}
+.sh{margin-bottom:1.5rem;}
+.sh h2{font-size:18px;font-weight:500;}
+.sh p{font-size:13px;color:var(--text2);margin-top:4px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1rem;}
+.ct{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:1rem;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;}
+.ml{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+.mv{font-family:var(--mono);font-size:20px;font-weight:500;}
+.ms{font-size:11px;color:var(--text3);margin-top:3px;}
+.mg .mv{color:var(--green);}.mr .mv{color:var(--red);}.mb .mv{color:var(--blue);}.ma .mv{color:var(--amber);}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-bottom:1rem;}
+.gsb{display:grid;grid-template-columns:300px minmax(0,1fr);gap:1rem;margin-bottom:1rem;}
+.cw{position:relative;}
+.uz{border:1.5px dashed var(--border2);border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg2);}
+.uz:hover,.uz.over{border-color:var(--green);background:rgba(0,212,160,0.04);}
+.uz h3{font-size:15px;font-weight:500;margin-bottom:6px;}
+.uz p{font-size:12px;color:var(--text2);}
+.uz input{display:none;}
+.fi{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:6px;padding:8px 12px;font-size:12px;margin-top:6px;}
+.fb{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500;}
+.fp{background:var(--bd);color:var(--blue);}.ft{background:var(--gd);color:var(--green);}
+.prow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;}
+.pp{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-family:var(--mono);border:1px solid;}
+.ps{color:var(--green);border-color:rgba(0,212,160,0.4);background:var(--gd);}
+.pm{color:var(--red);border-color:rgba(255,92,92,0.4);background:var(--rd);}
+.fr{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.flb{font-size:11px;color:var(--text2);font-family:var(--mono);}
+.fr input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--bg3);border-radius:2px;outline:none;cursor:pointer;}
+.fr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);cursor:pointer;border:2px solid var(--bg2);}
+.fv{font-family:var(--mono);font-size:12px;text-align:right;}
+.pbtn{width:100%;padding:11px;background:var(--green);color:#000;font-family:var(--mono);font-size:13px;font-weight:500;border:none;border-radius:8px;cursor:pointer;letter-spacing:0.04em;transition:opacity 0.15s;}
+.pbtn:hover{opacity:0.85;}
+.rp{padding:1rem;border-radius:8px;text-align:center;margin-top:12px;}
+.rps{background:var(--gd);border:1px solid rgba(0,212,160,0.3);}
+.rpm{background:var(--rd);border:1px solid rgba(255,92,92,0.3);}
+.rl{font-size:16px;font-weight:600;}
+.rps .rl{color:var(--green);}.rpm .rl{color:var(--red);}
+.rd{font-size:11px;color:var(--text2);margin-top:4px;font-family:var(--mono);}
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt th{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.06em;}
+.dt td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);font-family:var(--mono);}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:var(--bg3);}
+.dt tr.hl td{background:rgba(0,212,160,0.06);}
+.ts{max-height:320px;overflow-y:auto;overflow-x:auto;}
+.ts::-webkit-scrollbar{width:4px;}
+.ts::-webkit-scrollbar-track{background:var(--bg3);}
+.ts::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-weight:500;}
+.bs{background:var(--gd);color:var(--green);}.bm{background:var(--rd);color:var(--red);}
+.db{padding:6px 16px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;transition:all 0.15s;margin:0 4px 4px 0;}
+.db:hover{border-color:var(--blue);color:var(--blue);}
+.dbs{border-color:var(--green);color:var(--green);background:var(--gd);}
+.dbm{border-color:var(--red);color:var(--red);background:var(--rd);}
+.dba{border-width:2px !important;}
+.ib{background:var(--bd);border:1px solid rgba(77,159,255,0.2);border-radius:8px;padding:0.875rem 1.1rem;margin-bottom:1.5rem;font-size:13px;color:#a0c4ff;}
+.vg{color:var(--green);}.vr{color:var(--red);}.va{color:var(--amber);}.vb{color:var(--blue);}
+@media (max-width:900px){.metrics{grid-template-columns:repeat(3,1fr);}.gsb{grid-template-columns:1fr;}.g2{grid-template-columns:1fr;}}
+@media (max-width:768px){nav{flex-direction:column;height:auto;padding:0;}.nbrand{height:56px;padding:0 1rem;width:100%;justify-content:center;}.ntabs{overflow-x:auto;width:100%;border-top:1px solid var(--border);justify-content:flex-start;scrollbar-width:none;}.ntabs::-webkit-scrollbar{display:none;}.page{padding:1rem;}.metrics{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:480px){.metrics{grid-template-columns:1fr;}.nbrand{justify-content:flex-start;}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nbrand">
+    <div class="ndot"></div>
+    <span class="ntitle">(Ba<sub>1-x</sub>Ca<sub>x</sub>)TiO&#8323; &nbsp;Phase Stability</span>
+    <span class="nsub">DFT &#8594; ML Dashboard</span>
+  </div>
+  <div class="ntabs">
+    <div class="ntab act" onclick="showPage('overview',this)">Overview</div>
+    <div class="ntab" onclick="showPage('predict',this)">Predict</div>
+    <div class="ntab" onclick="showPage('compare',this)">Compare</div>
+    <div class="ntab" onclick="showPage('upload',this)">Upload Data</div>
+    <div class="ntab" onclick="toggleTheme()" id="theme-btn" style="border-left:1px solid var(--border);margin-left:10px;padding-left:20px;">&#9728;&#65039; Light Mode</div>
+  </div>
+</nav>
+
+<!-- OVERVIEW -->
+<div class="page act" id="page-overview">
+  <div class="sh"><h2>Phase Stability Overview</h2><p>ML predictions from DFT calculations &#8212; Ca doping 10% to 50% at Ba A-site</p></div>
+  <div id="ov-empty" class="ib">&#8505;&#65039; &nbsp;No data loaded. Go to <strong>Upload Data</strong> tab and upload your CSV files to populate this dashboard.</div>
+  <div id="ov-content" style="display:none">
+    <div class="prow" id="phase-pills"></div>
+    <div class="metrics" id="ov-metrics"></div>
+    <div class="g2">
+      <div class="card"><div class="ct">P(single-phase) vs Ca doping &#8212; all models</div><div class="cw" style="height:250px"><canvas id="c-overview"></canvas></div></div>
+      <div class="card"><div class="ct">Band gap &amp; Fermi energy trends</div><div class="cw" style="height:250px"><canvas id="c-trend"></canvas></div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ct">DFT features comparison</div><div class="cw" style="height:220px"><canvas id="c-feat"></canvas></div></div>
+      <div class="card"><div class="ct">Goldschmidt tolerance factor</div><div class="cw" style="height:220px"><canvas id="c-gold"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PREDICT -->
+<div class="page" id="page-predict">
+  <div class="sh"><h2>Predict Phase Stability</h2><p>Adjust features &#8212; graph updates only when you click Predict</p></div>
+  <div id="pr-empty" class="ib">&#8505;&#65039; &nbsp;No data loaded. Upload CSV files first, then come back to predict.</div>
+  <div id="pr-content" style="display:none">
+    <div class="gsb">
+      <div class="card">
+        <div class="ct">Input features</div>
+        <div class="fr"><div style="display:flex;justify-content:space-between"><span class="flb">Ca doping x (%)</span><span class="fv" id="v-x">10%</span></div><input type="range" min="0" max="100" value="10" step="1" id="sl-x" oninput="sliderUpdate()"></div>
+        <div class="fr"><div style="display:flex;justify-content:space-between"><span class="flb">Band gap (eV)</span><span class="fv" id="v-bg">3.23 eV</span></div><input type="range" min="2.5" max="4.0" value="3.23" step="0.01" id="sl-bg" oninput="sliderUpdate()"></div>
+        <div class="fr"><div style="display:flex;justify-content:space-between"><span class="flb">Fermi energy (eV)</span><span class="fv" id="v-fe">10.81 eV</span></div><input type="range" min="8.0" max="13.0" value="10.81" step="0.01" id="sl-fe" oninput="sliderUpdate()"></div>
+        <div class="fr"><div style="display:flex;justify-content:space-between"><span class="flb">DOS at Fermi</span><span class="fv" id="v-dos">0.048</span></div><input type="range" min="0" max="0.2" value="0.048" step="0.001" id="sl-dos" oninput="sliderUpdate()"></div>
+        <div class="fr"><div style="display:flex;justify-content:space-between"><span class="flb">DOS bandwidth (eV)</span><span class="fv" id="v-bw">19.95 eV</span></div><input type="range" min="15" max="25" value="19.95" step="0.05" id="sl-bw" oninput="sliderUpdate()"></div>
+        <button class="pbtn" onclick="runPredict()">Run Prediction &#8594;</button>
+        <div id="predict-result"></div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <div class="ct">Derived parameters</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-family:var(--mono)"><span style="color:var(--text3)">Goldschmidt t</span><span id="d-t" class="vb">&#8212;</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-family:var(--mono)"><span style="color:var(--text3)">A-site mismatch &#948;</span><span id="d-delta" class="vb">&#8212;</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card"><div class="ct" id="sweep-title">Phase stability sweep &#8212; click Predict to load</div><div class="cw" style="height:210px"><canvas id="c-sweep"></canvas></div></div>
+        <div class="card"><div class="ct">Predictions table</div><div class="ts"><table class="dt"><thead><tr><th>x (Ca%)</th><th>P(single)</th><th>Goldschmidt t</th><th>Result</th></tr></thead><tbody id="pr-tbody"></tbody></table></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE -->
+<div class="page" id="page-compare">
+  <div class="sh"><h2>Cross-Composition Comparison</h2><p>Compare ML predictions, DFT features and model performance across all doping levels</p></div>
+  <div id="cmp-empty" class="ib">&#8505;&#65039; &nbsp;No data loaded. Upload CSV files first to see comparison.</div>
+  <div id="cmp-content" style="display:none">
+    <div class="card">
+      <div class="ct">Select composition to highlight</div>
+      <div id="dop-selector" style="margin-bottom:1rem"></div>
+      <div id="sel-info"></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ct">P(single-phase) &#8212; all models side by side</div><div class="ts"><table class="dt"><thead id="cmp-thead"></thead><tbody id="cmp-tbody"></tbody></table></div></div>
+      <div class="card"><div class="ct">DFT real point features</div><div class="ts"><table class="dt"><thead id="dft-thead"></thead><tbody id="dft-tbody"></tbody></table></div></div>
+    </div>
+    <div class="card"><div class="ct">Model performance (best AUC per composition)</div><div class="cw" style="height:180px"><canvas id="c-perf"></canvas></div></div>
+  </div>
+</div>
+
+<!-- UPLOAD -->
+<div class="page" id="page-upload">
+  <div class="sh"><h2>Upload Your CSV Data</h2><p>Upload the CSV files generated from each BCT pipeline notebook</p></div>
+  <div class="ib">&#8505;&#65039; &nbsp;Upload <strong>phase_predictions_XX.csv</strong> and <strong>training_dataset_XX.csv</strong> for each doping level. Data is saved in your browser and persists after reload.</div>
+  <div class="g2">
+    <div>
+      <div class="uz" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropFiles(event)">
+        <div style="font-size:36px;margin-bottom:0.75rem">&#8679;</div>
+        <h3>Drop CSV files here</h3>
+        <p>or click to browse &#8212; upload all 10 files at once</p>
+        <input type="file" id="fileInput" multiple accept=".csv" onchange="handleFiles(this.files)">
+      </div>
+      <div id="file-list"></div>
+    </div>
+    <div class="card">
+      <div class="ct">Loaded datasets</div>
+      <div id="loaded-info"><p style="color:var(--text3);font-family:var(--mono);font-size:12px">No files uploaded yet.</p></div>
+      <div style="margin-top:1.25rem">
+        <div class="ct">Expected filenames</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg3);border-radius:6px;padding:0.75rem;line-height:2.2">
+          phase_predictions_10.csv &nbsp; training_dataset_10.csv<br>
+          phase_predictions_20.csv &nbsp; training_dataset_20.csv<br>
+          phase_predictions_30.csv &nbsp; training_dataset_30.csv<br>
+          phase_predictions_40.csv &nbsp; training_dataset_40.csv<br>
+          phase_predictions_50.csv &nbsp; training_dataset_50.csv
+        </div>
+      </div>
+      <button onclick="clearAllData()" style="margin-top:1rem;width:100%;padding:8px;background:transparent;border:1px solid var(--rd);color:var(--red);border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:12px">Clear all data</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const gV = (n) => getComputedStyle(document.body).getPropertyValue(n).trim();
+function toggleTheme(){
+  document.body.classList.toggle('light-mode');
+  const isL = document.body.classList.contains('light-mode');
+  document.getElementById('theme-btn').innerHTML = isL ? '&#127769; Dark Mode' : '&#9728;&#65039; Light Mode';
+  localStorage.setItem('bct_theme', isL ? 'light' : 'dark');
+  refreshAll();
+}
+// ===== STORAGE =====
+const SK = 'bct_v3';
+const COLORS = {10:'#4d9fff',20:'#00d4a0',30:'#ffb347',40:'#ff5c5c',50:'#c084fc'};
+const AUC_MAP   = {10:0.975,20:0.992,30:0.993,40:0.977,50:0.979};
+const MODEL_MAP  = {10:'SVM (RBF)',20:'Random Forest',30:'Random Forest',40:'SVM (RBF)',50:'SVM (RBF)'};
+
+let DB = {};
+function saveDB(){ try{localStorage.setItem(SK,JSON.stringify(DB));}catch(e){} }
+function loadDB(){ try{const r=localStorage.getItem(SK);if(r)DB=JSON.parse(r);}catch(e){DB={};} }
+function clearAllData(){
+  if(!confirm('Clear all uploaded data?'))return;
+  DB={};localStorage.removeItem(SK);
+  document.getElementById('file-list').innerHTML='';
+  refreshAll();
+}
+function avail(){ return Object.keys(DB).map(Number).sort((a,b)=>a-b); }
+
+// ===== NAVIGATION =====
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('act'));
+  document.getElementById('page-'+name).classList.add('act');
+  if(el)el.classList.add('act');
+  if(name==='overview')renderOverview();
+  if(name==='compare')renderCompare();
+  if(name==='predict'){sliderUpdate();showPredictPlaceholder();}
+}
+
+// ===== CSV =====
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line=>{
+    const vals=line.split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+    const obj={};
+    headers.forEach((h,i)=>{obj[h]=isNaN(vals[i])||vals[i]===''?vals[i]:parseFloat(vals[i]);});
+    return obj;
+  });
+}
+function getPct(fname){const m=fname.match(/(\d+)/);return m?parseInt(m[1]):null;}
+
+// ===== FILE HANDLING =====
+function dropFiles(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('over');
+  handleFiles(e.dataTransfer.files);
+}
+function handleFiles(files){
+  Array.from(files).forEach(file=>{
+    const fname=file.name.toLowerCase();
+    const isPred=fname.includes('phase_predictions');
+    const isTrain=fname.includes('training_dataset');
+    if(!isPred&&!isTrain)return;
+    const pct=getPct(file.name);
+    if(!pct)return;
+    addFileItem(file.name,isPred,pct);
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const rows=parseCSV(ev.target.result);
+      if(!DB[pct])DB[pct]={predictions:[],dft:{},samples:0,single:0,multi:0,auc:AUC_MAP[pct]||0,model:MODEL_MAP[pct]||'Unknown'};
+      if(isPred){
+        DB[pct].predictions=rows.map(r=>({
+          x:parseFloat(r['ca_doping_frac']||0),
+          p:parseFloat(r['p_single_phase']||0),
+          pred:r['prediction']||'',
+          t:parseFloat(r['goldschmidt_t']||0)
+        }));
+      }else{
+        const real=rows.find(r=>r['source']==='DFT_real')||rows[0];
+        if(real){
+          DB[pct].dft={
+            energy:parseFloat(real['total_energy_eV']||0),
+            fermi:parseFloat(real['fermi_energy_eV']||0),
+            gap:parseFloat(real['band_gap_eV']||0),
+            dos:parseFloat(real['dos_at_fermi']||0),
+            bw:parseFloat(real['dos_bandwidth_eV']||0),
+            vol:parseFloat(real['cell_volume_au3']||0),
+            stable:(real['phase_stable']!==undefined&&real['phase_stable']!=='')?parseFloat(real['phase_stable']):-1,
+            t:parseFloat(real['goldschmidt_t']||0)
+          };
+        }
+        DB[pct].samples=rows.length;
+        DB[pct].single=rows.filter(r=>parseFloat(r['phase_stable'])===1).length;
+        DB[pct].multi=rows.filter(r=>parseFloat(r['phase_stable'])===0).length;
+      }
+      saveDB();
+      markFileOk('fi-'+file.name);
+      updateLoadedInfo();
+      refreshAll();
+    };
+    reader.readAsText(file);
+  });
+}
+function addFileItem(name,isPred,pct){
+  const el=document.createElement('div');
+  el.className='fi';el.id='fi-'+name;
+  el.innerHTML=`<span class="fb ${isPred?'fp':'ft'}">${isPred?'PRED':'TRAIN'}</span><span style="flex:1;color:var(--text2)">${name}</span><span id="st-${name}" style="color:var(--text3);font-family:var(--mono);font-size:11px">parsing...</span>`;
+  document.getElementById('file-list').appendChild(el);
+}
+function markFileOk(id){
+  const el=document.getElementById(id);
+  if(el){const s=el.querySelector('span:last-child');if(s){s.textContent='✓ loaded';s.style.color='var(--green)';}}
+}
+function updateLoadedInfo(){
+  const pcts=avail();
+  if(!pcts.length){document.getElementById('loaded-info').innerHTML='<p style="color:var(--text3);font-family:var(--mono);font-size:12px">No files uploaded yet.</p>';return;}
+  document.getElementById('loaded-info').innerHTML=
+    `<p style="color:var(--green);font-family:var(--mono);font-size:12px;margin-bottom:10px">&#10003; ${pcts.length} composition(s) loaded: ${pcts.map(p=>p+'%').join(', ')}</p>`+
+    pcts.map(p=>{
+      const d=DB[p];const hasP=d.predictions.length>0;const hasT=Object.keys(d.dft).length>0;const s=d.dft.stable;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:${COLORS[p]};display:inline-block;flex-shrink:0"></span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--text2);flex:1">${p}%</span>
+        <span style="font-size:11px">${hasP?'<span class="vb">PRED&#10003;</span>':'<span style=color:var(--text3)>PRED&#10007;</span>'}</span>
+        <span style="font-size:11px;margin-left:6px">${hasT?'<span class="vg">TRAIN&#10003;</span>':'<span style=color:var(--text3)>TRAIN&#10007;</span>'}</span>
+        <span style="font-size:11px;margin-left:6px">${s===1?'<span class="vg">Single</span>':s===0?'<span class="vr">Multi</span>':'<span style=color:var(--text3)>?</span>'}</span>
+      </div>`;
+    }).join('');
+}
+
+// ===== CHART REGISTRY =====
+const charts={};
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+// ===== REFRESH =====
+function refreshAll(){
+  const pcts=avail();const has=pcts.length>0;
+  ['ov','pr','cmp'].forEach(pfx=>{
+    const e=document.getElementById(pfx+'-empty');const c=document.getElementById(pfx+'-content');
+    if(e)e.style.display=has?'none':'block';
+    if(c)c.style.display=has?'block':'none';
+  });
+  updateLoadedInfo();
+  if(!has)return;
+  // Only render currently visible page
+  const active=document.querySelector('.page.act');
+  if(!active)return;
+  const id=active.id;
+  if(id==='page-overview')renderOverview();
+  if(id==='page-compare')renderCompare();
+  if(id==='page-predict'){sliderUpdate();showPredictPlaceholder();}
+}
+
+// ===== OVERVIEW =====
+function renderOverview(){
+  const pcts=avail();if(!pcts.length)return;
+
+  // Pills
+  document.getElementById('phase-pills').innerHTML=pcts.map(p=>{
+    const s=DB[p].dft.stable;
+    return `<div class="pp ${s===1?'ps':s===0?'pm':''}">${p}% &#8212; ${s===1?'Single-phase &#10003;':s===0?'Multi-phase &#10007;':'Unknown'}</div>`;
+  }).join('');
+
+  // Metrics
+  const boundary=pcts.find(p=>DB[p].dft.stable===0);
+  const aucs=pcts.filter(p=>DB[p].auc).map(p=>DB[p].auc);
+  const gaps=pcts.filter(p=>DB[p].dft.gap!=null).map(p=>DB[p].dft.gap);
+  document.getElementById('ov-metrics').innerHTML=`
+    <div class="metric mb"><div class="ml">Compositions</div><div class="mv">${pcts.length}</div><div class="ms">${pcts.map(p=>p+'%').join(', ')}</div></div>
+    <div class="metric mg"><div class="ml">Phase boundary</div><div class="mv">${boundary?'~'+(boundary-5)+'&#8211;'+boundary+'%':'&mdash;'}</div><div class="ms">transition zone</div></div>
+    <div class="metric"><div class="ml">Band gap range</div><div class="mv">${gaps.length?gaps[0].toFixed(2)+'&#8211;'+gaps[gaps.length-1].toFixed(2):'&mdash;'}</div><div class="ms">eV (increases with x)</div></div>
+    <div class="metric ma"><div class="ml">Best AUC</div><div class="mv">${aucs.length?Math.max(...aucs).toFixed(3):'&mdash;'}</div><div class="ms">across all models</div></div>
+    <div class="metric"><div class="ml">Samples / model</div><div class="mv">${DB[pcts[0]]?.samples||'&mdash;'}</div><div class="ms">training dataset</div></div>`;
+
+  // Overview sweep chart
+  destroyChart('overview');
+  const refPreds=DB[pcts[0]].predictions;
+  if(refPreds.length){
+    const lbs=refPreds.map(r=>(r.x*100).toFixed(0)+'%');
+    const ds=pcts.map(p=>({
+      label:p+'% DFT',
+      data:DB[p].predictions.map(r=>+(r.p*100).toFixed(1)),
+      borderColor:COLORS[p],backgroundColor:COLORS[p]+'15',
+      borderWidth:2,pointRadius:3,tension:0.3,fill:false
+    }));
+    ds.push({label:'50% threshold',data:refPreds.map(()=>50),borderColor:gV('--text3'),borderWidth:1,borderDash:[5,4],pointRadius:0,fill:false});
+    charts['overview']=new Chart(document.getElementById('c-overview'),{
+      type:'line',data:{labels:lbs,datasets:ds},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:gV('--text2'),font:{size:11},boxWidth:12}}},
+        scales:{y:{min:0,max:108,ticks:{callback:v=>v+'%',color:gV('--text3'),font:{size:10}},grid:{color:gV('--grid')}},
+          x:{ticks:{color:gV('--text3'),font:{size:10},autoSkip:false,maxRotation:45},grid:{display:false}}}}
+    });
+  }
+
+  // Trend chart
+  destroyChart('trend');
+  const tl=pcts.map(p=>p+'%');
+  charts['trend']=new Chart(document.getElementById('c-trend'),{
+    type:'line',
+    data:{labels:tl,datasets:[
+      {label:'Band gap (eV)',data:pcts.map(p=>DB[p].dft.gap!=null?DB[p].dft.gap:null),borderColor:gV('--blue'),backgroundColor:gV('--bd'),borderWidth:2,pointRadius:5,tension:0.3,fill:true,yAxisID:'y1'},
+      {label:'Fermi energy (eV)',data:pcts.map(p=>DB[p].dft.fermi!=null?DB[p].dft.fermi:null),borderColor:gV('--amber'),backgroundColor:'rgba(217,119,6,0.15)',borderWidth:2,pointRadius:5,tension:0.3,fill:true,yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:gV('--text2'),font:{size:11},boxWidth:12}}},
+      scales:{
+        y1:{position:'left',ticks:{color:gV('--blue'),font:{size:10}},grid:{color:gV('--grid')},title:{display:true,text:'Band gap (eV)',color:gV('--blue'),font:{size:10}}},
+        y2:{position:'right',ticks:{color:gV('--amber'),font:{size:10}},grid:{display:false},title:{display:true,text:'Fermi E (eV)',color:gV('--amber'),font:{size:10}}},
+        x:{ticks:{color:gV('--text3'),font:{size:10}},grid:{display:false}}}}
+  });
+
+  // Feat chart
+  destroyChart('feat');
+  charts['feat']=new Chart(document.getElementById('c-feat'),{
+    type:'bar',
+    data:{labels:tl,datasets:[
+      {label:'Band gap (eV)',data:pcts.map(p=>(DB[p].dft.gap!=null?DB[p].dft.gap:0)),backgroundColor:pcts.map(p=>COLORS[p]+'99'),borderColor:pcts.map(p=>COLORS[p]),borderWidth:1,yAxisID:'y'},
+      {label:'DOS at Fermi x100',data:pcts.map(p=>+(((DB[p].dft.dos!=null?DB[p].dft.dos:0))*100).toFixed(3)),borderColor:'#c084fc',backgroundColor:'rgba(192,132,252,0.1)',borderWidth:2,type:'line',pointRadius:5,tension:0.3,yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:gV('--text2'),font:{size:11},boxWidth:12}}},
+      scales:{
+        y:{ticks:{color:gV('--text3'),font:{size:10}},grid:{color:gV('--grid')},title:{display:true,text:'Band gap (eV)',color:gV('--text3'),font:{size:10}}},
+        y2:{position:'right',ticks:{color:'#c084fc',font:{size:10}},grid:{display:false},title:{display:true,text:'DOS x100',color:'#c084fc',font:{size:10}}},
+        x:{ticks:{color:gV('--text3'),font:{size:10}},grid:{display:false}}}}
+  });
+
+  // Goldschmidt
+  destroyChart('gold');
+  const xs=[0,0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.60,0.75,1.0];
+  charts['gold']=new Chart(document.getElementById('c-gold'),{
+    type:'line',
+    data:{labels:xs.map(x=>(x*100).toFixed(0)+'%'),datasets:[
+      {label:'Goldschmidt t',data:xs.map(x=>+gT(x).toFixed(5)),borderColor:'#c084fc',backgroundColor:'#c084fc0d',borderWidth:2,pointRadius:2,tension:0.3,fill:true},
+      {label:'t=1.00',data:xs.map(()=>1.00),borderColor:gV('--amber'),borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+      {label:'t=0.90',data:xs.map(()=>0.90),borderColor:gV('--text3'),borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:gV('--text2'),font:{size:11},boxWidth:12}}},
+      scales:{y:{min:0.92,max:1.08,ticks:{color:gV('--text3'),font:{size:10},callback:v=>v.toFixed(2)},grid:{color:gV('--grid')}},
+        x:{ticks:{color:gV('--text3'),font:{size:10},autoSkip:true,maxRotation:45},grid:{display:false}}}}
+  });
+}
+
+// ===== COMPARE =====
+let selPct=null;
+function renderCompare(){
+  const pcts=avail();if(!pcts.length)return;
+  if(!selPct||!DB[selPct])selPct=pcts[0];
+
+  // Buttons
+  document.getElementById('dop-selector').innerHTML=pcts.map(p=>{
+    const s=DB[p].dft.stable;
+    const cls=(s===1?'dbs':s===0?'dbm':'')+(p===selPct?' dba':'');
+    return `<button class="db ${cls}" onclick="selPct=${p};renderCompare()">${p}% &mdash; ${s===1?'Single':s===0?'Multi':'?'}</button>`;
+  }).join('');
+
+  // Selected info
+  const d=DB[selPct].dft;
+  document.getElementById('sel-info').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">
+      ${[['Total energy',(d.energy!=null?d.energy:0).toFixed(1)+' eV'],['Band gap',(d.gap!=null?d.gap:0).toFixed(3)+' eV'],['Fermi energy',(d.fermi!=null?d.fermi:0).toFixed(4)+' eV'],['Goldschmidt t',(d.t!=null?d.t:0).toFixed(5)]].map(([l,v])=>`
+        <div style="background:var(--bg3);border-radius:6px;padding:0.75rem">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${l}</div>
+          <div style="font-family:var(--mono);font-size:14px">${v}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Compare table
+  const refPreds=DB[pcts[0]].predictions;
+  document.getElementById('cmp-thead').innerHTML=`<tr><th>x (Ca%)</th>${pcts.map(p=>`<th>${p}% model</th>`).join('')}</tr>`;
+  document.getElementById('cmp-tbody').innerHTML=refPreds.map((row,i)=>`
+    <tr>
+      <td>${(row.x*100).toFixed(0)}%</td>
+      ${pcts.map(p=>{
+        const r=DB[p].predictions[i];
+        if(!r)return '<td style="color:var(--text3)">&#8212;</td>';
+        return `<td class="${r.pred==='single'?'vg':'vr'}">${(r.p*100).toFixed(1)}%</td>`;
+      }).join('')}
+    </tr>`).join('');
+
+  // DFT table
+  document.getElementById('dft-thead').innerHTML=`<tr><th>Feature</th>${pcts.map(p=>`<th>${p}%</th>`).join('')}</tr>`;
+  const rows=[
+    ['Phase',       p=>DB[p].dft.stable===1?'<span class="vg">Single</span>':DB[p].dft.stable===0?'<span class="vr">Multi</span>':'?'],
+    ['Band gap (eV)',p=>((DB[p].dft.gap!=null?DB[p].dft.gap:0)).toFixed(3)],
+    ['Fermi E (eV)', p=>((DB[p].dft.fermi!=null?DB[p].dft.fermi:0)).toFixed(4)],
+    ['DOS @ Fermi',  p=>((DB[p].dft.dos!=null?DB[p].dft.dos:0)).toFixed(4)],
+    ['DOS bw (eV)',  p=>((DB[p].dft.bw!=null?DB[p].dft.bw:0)).toFixed(2)],
+    ['Goldschmidt t',p=>((DB[p].dft.t!=null?DB[p].dft.t:0)).toFixed(5)],
+    ['Best AUC',     p=>`<span class="va">${((DB[p].auc!=null?DB[p].auc:0)).toFixed(3)}</span>`],
+    ['Best model',   p=>DB[p].model||'&mdash;'],
+  ];
+  document.getElementById('dft-tbody').innerHTML=rows.map(([label,fn])=>
+    `<tr><td style="color:var(--text3)">${label}</td>${pcts.map(p=>`<td>${fn(p)}</td>`).join('')}</tr>`
+  ).join('');
+
+  // Perf chart
+  destroyChart('perf');
+  charts['perf']=new Chart(document.getElementById('c-perf'),{
+    type:'bar',
+    data:{labels:pcts.map(p=>p+'%'),datasets:[{
+      label:'Best AUC',data:pcts.map(p=>(DB[p].auc!=null?DB[p].auc:0)),
+      backgroundColor:pcts.map(p=>COLORS[p]+'99'),borderColor:pcts.map(p=>COLORS[p]),borderWidth:1
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:gV('--text2'),font:{size:11}}}},
+      scales:{y:{min:0.96,max:1.0,ticks:{color:gV('--text3'),font:{size:10},callback:v=>v.toFixed(3)},grid:{color:gV('--grid')}},
+        x:{ticks:{color:gV('--text3'),font:{size:10}},grid:{display:false}}}}
+  });
+}
+
+// ===== PREDICT =====
+function sliderUpdate(){
+  const x=parseInt(document.getElementById('sl-x').value)/100;
+  const bg=parseFloat(document.getElementById('sl-bg').value);
+  const fe=parseFloat(document.getElementById('sl-fe').value);
+  const dos=parseFloat(document.getElementById('sl-dos').value);
+  const bw=parseFloat(document.getElementById('sl-bw').value);
+  document.getElementById('v-x').textContent=(x*100).toFixed(0)+'%';
+  document.getElementById('v-bg').textContent=bg.toFixed(2)+' eV';
+  document.getElementById('v-fe').textContent=fe.toFixed(2)+' eV';
+  document.getElementById('v-dos').textContent=dos.toFixed(3);
+  document.getElementById('v-bw').textContent=bw.toFixed(2)+' eV';
+  document.getElementById('d-t').textContent=gT(x).toFixed(5);
+  document.getElementById('d-delta').textContent=dA(x).toFixed(5);
+}
+function showPredictPlaceholder(){
+  // Draw placeholder text on sweep canvas without destroying real chart
+  if(charts['sweep'])return; // already has chart
+  const c=document.getElementById('c-sweep');if(!c)return;
+  setTimeout(()=>{
+    const ctx=c.getContext('2d');
+    ctx.clearRect(0,0,c.width,c.height);
+    ctx.fillStyle=gV('--text3');ctx.font='12px IBM Plex Mono,monospace';ctx.textAlign='center';
+    ctx.fillText('Click "Run Prediction" to load chart',c.width/2,c.height/2);
+  },80);
+}
+function runPredict(){
+  const pcts=avail();
+  if(!pcts.length){
+    document.getElementById('predict-result').innerHTML=`<div class="rp" style="background:var(--bd);border:1px solid rgba(77,159,255,0.3)"><div style="color:var(--blue);font-family:var(--mono);font-size:13px">No data loaded</div><div class="rd">Go to Upload tab first.</div></div>`;
+    return;
+  }
+  const x=parseInt(document.getElementById('sl-x').value)/100;
+  const bg=parseFloat(document.getElementById('sl-bg').value);
+  const fe=parseFloat(document.getElementById('sl-fe').value);
+  const t=gT(x);
+  let sc=0;
+  sc+=(x<0.40)?(1-x/0.40)*0.5:-0.5;
+  sc+=(t>1.00)?0.3:(t>0.95?0.1:-0.2);
+  sc+=(bg>3.0&&bg<3.8)?0.1:0;
+  sc+=(fe>9.5&&fe<11.5)?0.05:0;
+  const prob=Math.min(0.9999,Math.max(0.0001,1/(1+Math.exp(-sc*8))));
+  const single=prob>=0.5;
+  document.getElementById('predict-result').innerHTML=`
+    <div class="rp ${single?'rps':'rpm'}">
+      <div class="rl">${single?'Single-phase stable':'Multi-phase predicted'}</div>
+      <div class="rd">P(single) = ${(prob*100).toFixed(1)}% &nbsp;|&nbsp; t = ${t.toFixed(4)} &nbsp;|&nbsp; x = ${(x*100).toFixed(0)}%</div>
+    </div>`;
+  // Find closest model
+  const closest=pcts.reduce((a,b)=>Math.abs(b/100-x)<Math.abs(a/100-x)?b:a);
+  const preds=DB[closest].predictions;
+  document.getElementById('sweep-title').textContent=`Phase stability sweep &#8212; ${closest}% model (closest to x=${(x*100).toFixed(0)}%)`;
+  // Table
+  const tbody=document.getElementById('pr-tbody');tbody.innerHTML='';
+  preds.forEach(r=>{
+    const isX=Math.abs(r.x-x)<0.026;
+    const tr=document.createElement('tr');if(isX)tr.className='hl';
+    tr.innerHTML=`<td>${(r.x*100).toFixed(0)}%${isX?' &#9668;':''}</td><td>${(r.p*100).toFixed(1)}%</td><td>${r.t.toFixed(4)}</td><td><span class="badge ${r.pred==='single'?'bs':'bm'}">${r.pred}</span></td>`;
+    tbody.appendChild(tr);
+  });
+  // Chart — only on button click
+  destroyChart('sweep');
+  const labels=preds.map(r=>(r.x*100).toFixed(0)+'%');
+  const probs=preds.map(r=>+(r.p*100).toFixed(1));
+  charts['sweep']=new Chart(document.getElementById('c-sweep'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'P(single-phase)',data:probs,borderColor:COLORS[closest],backgroundColor:COLORS[closest]+'22',borderWidth:2,pointRadius:4,pointBackgroundColor:probs.map(p=>p>=50?gV('--green'):gV('--red')),tension:0.3,fill:true},
+      {label:'50% threshold',data:preds.map(()=>50),borderColor:gV('--text3'),borderWidth:1,borderDash:[5,4],pointRadius:0,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:gV('--text2'),font:{size:11},boxWidth:12}}},
+      scales:{y:{min:0,max:108,ticks:{callback:v=>v+'%',color:gV('--text3'),font:{size:10}},grid:{color:gV('--grid')}},
+        x:{ticks:{color:gV('--text3'),font:{size:10},autoSkip:false,maxRotation:45},grid:{display:false}}}}
+  });
+}
+
+// ===== PHYSICS =====
+function gT(x){const rBa=1.61,rCa=1.34,rTi=0.605,rO=1.40;return((1-x)*rBa+x*rCa+rO)/(Math.sqrt(2)*(rTi+rO));}
+function dA(x){const rBa=1.61,rCa=1.34,rM=(1-x)*rBa+x*rCa;return Math.sqrt((1-x)*Math.pow((rBa-rM)/rM,2)+x*Math.pow((rCa-rM)/rM,2));}
+
+// ===== INIT =====
+if(localStorage.getItem('bct_theme')==='light') {
+  document.body.classList.add('light-mode');
+  document.getElementById('theme-btn').innerHTML = '&#127769; Dark Mode';
+}
+loadDB();
+sliderUpdate();
+refreshAll();
+</script>
+</body>
+</html>
