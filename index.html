@@ -195,7 +195,8 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;d
           phase_predictions_50.csv &nbsp; training_dataset_50.csv
         </div>
       </div>
-      <button onclick="clearAllData()" style="margin-top:1rem;width:100%;padding:8px;background:transparent;border:1px solid var(--rd);color:var(--red);border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:12px">Clear all data</button>
+      <button id="preload-btn" onclick="loadPreloadedData()" style="margin-top:1.25rem;width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:13px;font-weight:500;transition:opacity 0.15s">Load Preloaded Dataset</button>
+      <button onclick="clearAllData()" style="margin-top:0.75rem;width:100%;padding:8px;background:transparent;border:1px solid var(--rd);color:var(--red);border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:12px">Clear all data</button>
     </div>
   </div>
 </div>
@@ -266,41 +267,70 @@ function handleFiles(files){
     if(!pct)return;
     addFileItem(file.name,isPred,pct);
     const reader=new FileReader();
-    reader.onload=ev=>{
-      const rows=parseCSV(ev.target.result);
-      if(!DB[pct])DB[pct]={predictions:[],dft:{},samples:0,single:0,multi:0,auc:AUC_MAP[pct]||0,model:MODEL_MAP[pct]||'Unknown'};
-      if(isPred){
-        DB[pct].predictions=rows.map(r=>({
-          x:parseFloat(r['ca_doping_frac']||0),
-          p:parseFloat(r['p_single_phase']||0),
-          pred:r['prediction']||'',
-          t:parseFloat(r['goldschmidt_t']||0)
-        }));
-      }else{
-        const real=rows.find(r=>r['source']==='DFT_real')||rows[0];
-        if(real){
-          DB[pct].dft={
-            energy:parseFloat(real['total_energy_eV']||0),
-            fermi:parseFloat(real['fermi_energy_eV']||0),
-            gap:parseFloat(real['band_gap_eV']||0),
-            dos:parseFloat(real['dos_at_fermi']||0),
-            bw:parseFloat(real['dos_bandwidth_eV']||0),
-            vol:parseFloat(real['cell_volume_au3']||0),
-            stable:(real['phase_stable']!==undefined&&real['phase_stable']!=='')?parseFloat(real['phase_stable']):-1,
-            t:parseFloat(real['goldschmidt_t']||0)
-          };
-        }
-        DB[pct].samples=rows.length;
-        DB[pct].single=rows.filter(r=>parseFloat(r['phase_stable'])===1).length;
-        DB[pct].multi=rows.filter(r=>parseFloat(r['phase_stable'])===0).length;
-      }
-      saveDB();
-      markFileOk('fi-'+file.name);
-      updateLoadedInfo();
-      refreshAll();
-    };
+    reader.onload=ev=>processCSVText(ev.target.result, file.name, isPred, pct);
     reader.readAsText(file);
   });
+}
+function processCSVText(text, fname, isPred, pct){
+  const rows=parseCSV(text);
+  if(!DB[pct])DB[pct]={predictions:[],dft:{},samples:0,single:0,multi:0,auc:AUC_MAP[pct]||0,model:MODEL_MAP[pct]||'Unknown'};
+  if(isPred){
+    DB[pct].predictions=rows.map(r=>({
+      x:parseFloat(r['ca_doping_frac']||0),
+      p:parseFloat(r['p_single_phase']||0),
+      pred:r['prediction']||'',
+      t:parseFloat(r['goldschmidt_t']||0)
+    }));
+  }else{
+    const real=rows.find(r=>r['source']==='DFT_real')||rows[0];
+    if(real){
+      DB[pct].dft={
+        energy:parseFloat(real['total_energy_eV']||0),
+        fermi:parseFloat(real['fermi_energy_eV']||0),
+        gap:parseFloat(real['band_gap_eV']||0),
+        dos:parseFloat(real['dos_at_fermi']||0),
+        bw:parseFloat(real['dos_bandwidth_eV']||0),
+        vol:parseFloat(real['cell_volume_au3']||0),
+        stable:(real['phase_stable']!==undefined&&real['phase_stable']!=='')?parseFloat(real['phase_stable']):-1,
+        t:parseFloat(real['goldschmidt_t']||0)
+      };
+    }
+    DB[pct].samples=rows.length;
+    DB[pct].single=rows.filter(r=>parseFloat(r['phase_stable'])===1).length;
+    DB[pct].multi=rows.filter(r=>parseFloat(r['phase_stable'])===0).length;
+  }
+  saveDB();
+  markFileOk('fi-'+fname);
+  updateLoadedInfo();
+  refreshAll();
+}
+async function loadPreloadedData() {
+  const btn = document.getElementById('preload-btn');
+  btn.textContent = 'Loading...';
+  btn.disabled = true;
+  const pcts = [10, 20, 30, 40, 50];
+  let loadedAny = false;
+  for (const p of pcts) {
+    const fPred = `phase_predictions ${p}.csv`;
+    const fTrain = `training_dataset ${p}.csv`;
+    try {
+      let r1 = await fetch('Preloaded%20dataset/' + encodeURIComponent(fPred));
+      if(r1.ok) {
+        if(!document.getElementById('fi-'+fPred)) addFileItem(fPred, true, p);
+        processCSVText(await r1.text(), fPred, true, p);
+        loadedAny = true;
+      }
+      let r2 = await fetch('Preloaded%20dataset/' + encodeURIComponent(fTrain));
+      if(r2.ok) {
+        if(!document.getElementById('fi-'+fTrain)) addFileItem(fTrain, false, p);
+        processCSVText(await r2.text(), fTrain, false, p);
+        loadedAny = true;
+      }
+    } catch(e) { console.error(e); }
+  }
+  if(!loadedAny) alert('Could not load preloaded dataset files on the server.');
+  btn.textContent = 'Load Preloaded Dataset';
+  btn.disabled = false;
 }
 function addFileItem(name,isPred,pct){
   const el=document.createElement('div');
