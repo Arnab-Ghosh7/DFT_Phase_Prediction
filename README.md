@@ -3,7 +3,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![UI: Responsive Dashboard](https://img.shields.io/badge/UI-Responsive%20Dashboard-blue)](#)
 
-A machine learning and Density Functional Theory (DFT) driven dashboard designed to predict and analyze the phase stability of Calcium-doped Barium Titanate (Ba<sub>1-x</sub>Ca<sub>x</sub>)TiO<sub>3</sub>.
 
 
 ## Overview
