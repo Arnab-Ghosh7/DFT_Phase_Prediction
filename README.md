@@ -8,7 +8,6 @@ A machine learning and Density Functional Theory (DFT) driven dashboard designed
 
 ## Overview
 
-This project provides an interactive web-based ML dashboard that visualizes phase transitions and electronic properties by bridging high-throughput DFT calculations with predictive machine learning models. The interface handles models trained on varying calcium doping concentrations ($x$ ranging from 10% to 50% at the Ba A-site).
 
 ## Features
 
