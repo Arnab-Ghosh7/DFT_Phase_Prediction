@@ -11,11 +11,7 @@ This project provides an interactive web-based ML dashboard that visualizes phas
 
 
 ## Features
-- **Interactive ML Predictions**: Adjust features like Calcium doping percentage, Band Gap, Fermi Energy, and DOS (Density of States) to receive real-time phase stability predictions.
-- **Cross-Composition Comparison**: Side-by-side analysis of model performance (e.g., SVM, Random Forest), probability of single-phase stability, and DFT features across all doping levels.
-- **Physics-Informed Metrics**: Automatic calculation of fundamental parameters such as the Goldschmidt tolerance factor ($t$) and A-site mismatch ($\delta$).
-- **Responsive UI & Themes**: Fully responsive design optimized for Desktop, Tablet, and Mobile, featuring seamless Light and Dark mode support.
-- **Local Data Handling**: Secure, client-side CSV parsing. Drag and drop your DFT pipeline data (`phase_predictions_XX.csv`, `training_dataset_XX.csv`) to instantly populate the dashboard visualizations without server interactions.
+
 
 
 ## Technologies Used
