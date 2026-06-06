@@ -18,12 +18,6 @@ This project provides an interactive web-based ML dashboard that visualizes phas
 - **Local Data Handling**: Secure, client-side CSV parsing. Drag and drop your DFT pipeline data (`phase_predictions_XX.csv`, `training_dataset_XX.csv`) to instantly populate the dashboard visualizations without server interactions.
 
 
-## Technologies Used
-
-- **Frontend**: Vanilla HTML5, CSS3, JavaScript (ES6)
-- **Data Visualization**: [Chart.js](https://www.chartjs.org/) (v4.4.1)
-- **Machine Learning**: Random Forest, SVM (RBF)
-- **Physics Data**: Density Functional Theory (DFT) pipeline outputs
 
 ## Getting Started
 
