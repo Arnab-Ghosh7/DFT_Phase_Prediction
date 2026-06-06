@@ -19,6 +19,12 @@ This project provides an interactive web-based ML dashboard that visualizes phas
 
 
 
+## Technologies Used
+
+- **Frontend**: Vanilla HTML5, CSS3, JavaScript (ES6)
+- **Data Visualization**: [Chart.js](https://www.chartjs.org/) (v4.4.1)
+- **Machine Learning**: Random Forest, SVM (RBF)
+- **Physics Data**: Density Functional Theory (DFT) pipeline outputs
 ## Getting Started
 
 ### Prerequisites
